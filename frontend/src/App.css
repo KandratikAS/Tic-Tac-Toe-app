@@ -1,0 +1,234 @@
+/* Контейнер для полного экрана */
+.full-screen-container {
+  display: flex;
+  justify-content: center; /* горизонтально */
+  align-items: center;     /* вертикально */
+  height: 100vh;           /* весь экран */
+  width: 100vw;            /* полная ширина */
+  background: radial-gradient(circle at top, #0f172a, #020617);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-card {
+  background: linear-gradient(145deg, #1e3a8a, #4338ca);
+  padding: 40px 50px;
+  border-radius: 25px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  text-align: center;
+}
+
+.login-title {
+  font-size: 2rem;
+  color: #f0f9ff;
+  margin-bottom: 25px;
+  letter-spacing: 1px;
+}
+
+.login-input {
+  width: 90%;
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  border-radius: 15px;
+  border: none;
+  font-size: 1.1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.login-input:focus {
+  outline: none;
+  transform: scale(1.02);
+  box-shadow: 0 0 10px #38bdf8;
+}
+
+.login-btn {
+  padding: 12px 25px;
+  border-radius: 20px;
+  border: none;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #0f172a;
+  background: #38bdf8;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.login-btn:hover {
+  background: #22c55e;
+  transform: scale(1.05);
+  color: #fff;
+}
+
+/* --- Lobby specific styles --- */
+.lobby-card {
+  background: linear-gradient(145deg, #1e40af, #4338ca);
+  padding: 40px 50px;
+  border-radius: 25px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  text-align: center;
+  color: #f0f9ff;
+  width: 350px;
+}
+
+.lobby-title {
+  font-size: 2rem;
+  margin-bottom: 25px;
+}
+
+.create-game {
+  margin-bottom: 20px;
+}
+
+.session {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1e293b;
+  padding: 12px 15px;
+  border-radius: 15px;
+  margin-bottom: 12px;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.session:hover {
+  transform: scale(1.02);
+  background: #334155;
+}
+
+.join-btn {
+  background: #facc15;
+  color: #0f172a;
+  border: none;
+  border-radius: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.join-btn:hover {
+  background: #eab308;
+  transform: scale(1.05);
+}
+
+.full-label {
+  color: #f87171;
+  font-weight: bold;
+}
+
+/* Кнопки создания игры */
+.primary-btn {
+  background: #38bdf8;
+  color: #0f172a;
+  padding: 10px 18px;
+  border-radius: 15px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.primary-btn:hover {
+  background: #22c55e;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* --- GameBoard specific styles --- */
+.game-card {
+  background: linear-gradient(145deg, #1e3a8a, #4338ca);
+  padding: 40px 50px;
+  border-radius: 25px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  text-align: center;
+  color: #f0f9ff;
+  width: 360px;
+}
+
+.game-title {
+  font-size: 2rem;
+  margin-bottom: 25px;
+}
+
+/* Игровое поле */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 100px);
+  gap: 12px;
+  justify-content: center;
+}
+
+.cell {
+  width: 100px;
+  height: 100px;
+  background: #0f172a;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.cell:hover {
+  background: #1e293b;
+  transform: scale(1.05);
+}
+
+.cell.filled {
+  cursor: not-allowed;
+  color: #facc15;
+  animation: pop 0.2s ease-in-out;
+}
+
+/* Анимация при появлении X или O */
+@keyframes pop {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Адаптив для мобильных */
+@media(max-width:480px){
+  .grid {
+    grid-template-columns: repeat(3, 70px);
+    gap: 8px;
+  }
+  .cell {
+    width: 70px;
+    height: 70px;
+    font-size: 2rem;
+  }
+  .game-card {
+    width: 300px;
+    padding: 30px 30px;
+  }
+}
+
+.cell {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  border: 1px solid black;
+  color: black;
+  cursor: pointer;
+}
+
+.cell.filled {
+  font-weight: bold;
+}
+
+.win-cell {
+  background-color: yellow;
+  text-decoration: line-through;
+  font-weight: bold;
+}
