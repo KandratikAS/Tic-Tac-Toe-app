@@ -1,3 +1,7 @@
 import { io } from "socket.io-client";
 
-export const socket = io("http://localhost:3000");
+const SERVER_URL = window.location.hostname === "localhost" 
+    ? "http://localhost:3000"
+    : `${window.location.origin}`;
+
+export const socket = io(SERVER_URL);
