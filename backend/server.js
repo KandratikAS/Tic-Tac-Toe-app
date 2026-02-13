@@ -174,7 +174,7 @@ io.on("connection", socket => {
   });
 });
 
-const buildPath = path.join(__dirname, "frontend");
+const buildPath = path.join(__dirname, "../frontend");
 app.use(express.static(buildPath));
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(buildPath, "index.html"));
