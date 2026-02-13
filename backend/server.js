@@ -12,11 +12,9 @@ const io = new Server(server, {
 
 app.use(express.static("public"));
 
-// --- Статистика ---
 const statsFile = "./stats.json";
 let stats = {};
 
-// Загружаем статистику при старте
 try {
   const data = fs.readFileSync(statsFile, "utf-8");
   stats = JSON.parse(data);
@@ -26,12 +24,10 @@ try {
   stats = {};
 }
 
-// Сохраняем статистику на диск
 function saveStats() {
   fs.writeFileSync(statsFile, JSON.stringify(stats, null, 2));
 }
 
-// Создаём статистику для игрока
 function createStats(name) {
   if (!stats[name]) {
     stats[name] = { wins: 0, losses: 0, draws: 0 };
@@ -39,10 +35,8 @@ function createStats(name) {
   }
 }
 
-// --- Сессии ---
-let sessions = {}; // глобальная переменная для всех игр
+let sessions = {}; 
 
-// Проверка победы
 function checkWin(board) {
   const w = [
     [0,1,2],[3,4,5],[6,7,8],
@@ -57,7 +51,6 @@ function checkWin(board) {
   return null;
 }
 
-// Завершение игры
 function finishGame(id, win, line = null) {
   const game = sessions[id];
   if (!game) return;
@@ -142,12 +135,10 @@ io.on("connection", socket => {
       io.to(firstPlayer.id).emit("joined", { id, symbol: "X", board: game.board });
     }
 
-    // Старт игры для обоих
     io.to(id).emit("start", game);
     io.emit("sessionList", sessions);
   });
 
-  // Ход игрока
   socket.on("move", ({ id, index }) => {
     const game = sessions[id];
     if (!game) return;
@@ -169,7 +160,6 @@ io.on("connection", socket => {
     }
   });
 
-  // Отключение игрока
   socket.on("disconnect", () => {
     for (const id in sessions) {
       const game = sessions[id];
@@ -194,4 +184,5 @@ io.on("connection", socket => {
   });
 });
 
-server.listen(3000, () => console.log("Server running on http://localhost:3000"));
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
