@@ -6,16 +6,13 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// --- Путь к текущему файлу ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// --- Express и Socket.io ---
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// --- Статистика ---
 const statsFile = path.join(__dirname, "stats.json");
 let stats = {};
 try {
@@ -36,7 +33,6 @@ function createStats(name) {
   }
 }
 
-// --- Игровые сессии ---
 let sessions = {};
 
 function checkWin(board) {
@@ -80,11 +76,9 @@ function getPlayerSymbol(socketId, game) {
   return player?.symbol;
 }
 
-// --- Socket.io ---
 io.on("connection", socket => {
   console.log("New connection:", socket.id);
 
-  // Создание новой сессии
   socket.on("createSession", ({ name }) => {
     createStats(name);
     const id = randomUUID().slice(0,6);
@@ -125,11 +119,9 @@ io.on("connection", socket => {
 
     console.log(`${name} joined session ${id} as O`);
 
-    // Второму игроку отправляем joined и start
     socket.emit("joined", { id, symbol: "O" });
     socket.emit("start", game);
 
-    // Первому игроку отправляем только start
     const firstPlayer = game.players.find(p => p.symbol === "X");
     if (firstPlayer) {
       io.to(firstPlayer.id).emit("start", game);
@@ -138,7 +130,6 @@ io.on("connection", socket => {
     io.emit("sessionList", sessions);
   });
 
-  // Ход игрока
   socket.on("move", ({ id, index }) => {
     const game = sessions[id];
     if (!game) return;
@@ -159,7 +150,6 @@ io.on("connection", socket => {
     }
   });
 
-  // Отключение игрока
   socket.on("disconnect", () => {
     for (const id in sessions) {
       const game = sessions[id];
@@ -184,13 +174,11 @@ io.on("connection", socket => {
   });
 });
 
-// --- Рендер фронтенда ---
-const buildPath = path.join(__dirname, "../frontend/dist");
+const buildPath = path.join(__dirname, "frontend");
 app.use(express.static(buildPath));
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(buildPath, "index.html"));
 });
 
-// --- Запуск сервера ---
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
