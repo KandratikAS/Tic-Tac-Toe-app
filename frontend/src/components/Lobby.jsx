@@ -13,18 +13,11 @@ export default function Lobby({ games, name }) {
     <div className="card lobby-card">
       <h2 className="lobby-title">🎲 Lobby</h2>
 
-      {/* Создать новую игру */}
       <div className="create-game">
         <button className="primary-btn" onClick={() => createSession("tic-tac-toe")}>
           ➕ Create Tic-Tac-Toe Game
         </button>
-        {/* Можно добавлять другие игры позже */}
-        {/* <button className="primary-btn" onClick={() => createSession("connect4")}>
-          ➕ Create Connect-4 Game
-        </button> */}
       </div>
-
-      {/* Список сессий */}
       <div className="list">
         {Object.entries(games).map(([id, game]) => (
           <div key={id} className="session">

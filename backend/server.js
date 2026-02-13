@@ -2,6 +2,7 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import { randomUUID } from "crypto";
+import fs from "fs";
 
 const app = express();
 const server = http.createServer(app);
@@ -11,13 +12,35 @@ const io = new Server(server, {
 
 app.use(express.static("public"));
 
-let sessions = {}; // {id: {players:[{id,name,symbol}], board:Array(9), turn, gameType}}
-let stats = {};    // {name:{wins,losses,draws}}
+// --- Статистика ---
+const statsFile = "./stats.json";
+let stats = {};
+
+// Загружаем статистику при старте
+try {
+  const data = fs.readFileSync(statsFile, "utf-8");
+  stats = JSON.parse(data);
+  console.log("Statistics loaded:", stats);
+} catch (e) {
+  console.log("No stats.json found, starting fresh.");
+  stats = {};
+}
+
+// Сохраняем статистику на диск
+function saveStats() {
+  fs.writeFileSync(statsFile, JSON.stringify(stats, null, 2));
+}
 
 // Создаём статистику для игрока
 function createStats(name) {
-  if (!stats[name]) stats[name] = { wins: 0, losses: 0, draws: 0 };
+  if (!stats[name]) {
+    stats[name] = { wins: 0, losses: 0, draws: 0 };
+    saveStats();
+  }
 }
+
+// --- Сессии ---
+let sessions = {}; // глобальная переменная для всех игр
 
 // Проверка победы
 function checkWin(board) {
@@ -45,14 +68,14 @@ function finishGame(id, win, line = null) {
     if (winner && loser) {
       stats[winner.name].wins++;
       stats[loser.name].losses++;
+      saveStats();
     }
   } else {
     game.players.forEach(p => stats[p.name].draws++);
+    saveStats();
   }
 
-  // Отправляем событие end с линией победы
   io.to(id).emit("end", { winner: win, line, stats, board: game.board });
-
   delete sessions[id];
   io.emit("sessionList", sessions);
 }
@@ -63,42 +86,49 @@ function getPlayerSymbol(socketId, game) {
   return player?.symbol;
 }
 
+// --- Socket.io ---
 io.on("connection", socket => {
   console.log("New connection:", socket.id);
 
   // Создание новой сессии
-  socket.on("createSession", ({ name, gameType="tic-tac-toe" }) => {
+  socket.on("createSession", ({ name, gameType = "tic-tac-toe" }) => {
     createStats(name);
     const id = randomUUID().slice(0,6);
+
     sessions[id] = {
       players: [{ id: socket.id, name, symbol: "X" }],
       board: Array(9).fill(null),
       turn: "X",
       gameType
     };
+
     socket.join(id);
-    console.log(`Session created: ${id} by ${name}`);
-    socket.emit("joined", { id, symbol: "X", board: sessions[id].board });
+    socket.emit("joined", { id, symbol: "X" });
     io.emit("sessionList", sessions);
+
+    console.log(`${name} created session ${id}`);
   });
 
   // Присоединение к существующей сессии
   socket.on("joinSession", ({ id, name }) => {
     const game = sessions[id];
     if (!game) {
-      console.log(`Join failed: session ${id} not found`);
+      console.log(`Session ${id} not found`);
       return;
     }
+
     if (game.players.length >= 2) {
-      console.log(`Join failed: session ${id} full`);
+      console.log(`Session ${id} is already full`);
       return;
     }
+
     if (game.players.find(p => p.id === socket.id)) {
-      console.log(`Join failed: player ${socket.id} already in session`);
+      console.log(`${name} already in session ${id}`);
       return;
     }
 
     createStats(name);
+
     const newPlayer = { id: socket.id, name, symbol: "O" };
     game.players.push(newPlayer);
     socket.join(id);
@@ -106,7 +136,7 @@ io.on("connection", socket => {
     console.log(`${name} joined session ${id} as O`);
 
     // Отправляем каждому игроку его символ
-    socket.emit("joined", { id, symbol: "O", board: game.board });
+    socket.emit("joined", { id, symbol: "O" });
     const firstPlayer = game.players.find(p => p.symbol === "X");
     if (firstPlayer) {
       io.to(firstPlayer.id).emit("joined", { id, symbol: "X", board: game.board });
@@ -123,23 +153,17 @@ io.on("connection", socket => {
     if (!game) return;
 
     const playerSymbol = getPlayerSymbol(socket.id, game);
-    if (!playerSymbol) return;
-    if (game.board[index] !== null) return;
-    if (game.turn !== playerSymbol) return;
+    if (!playerSymbol || game.board[index] !== null || game.turn !== playerSymbol) return;
 
-    // Ставим символ
     game.board[index] = playerSymbol;
 
-    // Проверяем победителя один раз
     const result = checkWin(game.board);
     const win = result?.winner;
     const line = result?.line;
 
     if (win || !game.board.includes(null)) {
-      // Завершаем игру и передаем линию победы
       finishGame(id, win, line);
     } else {
-      // Меняем очередь и отправляем обновление
       game.turn = game.turn === "X" ? "O" : "X";
       io.to(id).emit("update", game);
     }
@@ -147,17 +171,16 @@ io.on("connection", socket => {
 
   // Отключение игрока
   socket.on("disconnect", () => {
-    console.log(`Player disconnected: ${socket.id}`);
     for (const id in sessions) {
       const game = sessions[id];
       const idx = game.players.findIndex(p => p.id === socket.id);
       if (idx !== -1) {
         const disconnected = game.players.splice(idx, 1)[0];
-        console.log(`Removing player ${socket.id} (${disconnected.name}) from session ${id}`);
 
         if (game.players.length === 1) {
           const remaining = game.players[0];
           stats[remaining.name].wins++;
+          saveStats();
           io.to(id).emit("end", { winner: remaining.symbol, line: null, stats, board: game.board });
           delete sessions[id];
         } else if (game.players.length === 0) {

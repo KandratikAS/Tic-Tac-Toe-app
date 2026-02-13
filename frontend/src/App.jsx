@@ -3,6 +3,7 @@ import { socket } from "./socket";
 import Login from "./components/Login.jsx";
 import Lobby from "./components/Lobby.jsx";
 import GameBoard from "./components/GameBoard.jsx";
+import Stats from "./components/Stats.jsx"; 
 import confetti from "canvas-confetti";
 import "./App.css";
 
@@ -14,13 +15,13 @@ export default function App() {
   const [mySymbol, setMySymbol] = useState(null);
   const [isGameOver, setIsGameOver] = useState(false);
   const [winLine, setWinLine] = useState([]);
+  const [stats, setStats] = useState({}); 
 
   useEffect(() => {
     socket.on("sessionList", setGames);
 
     socket.on("joined", (d) => {
       setGameId(d.id);
-      setBoard(d.board);
       setMySymbol(d.symbol);
       setIsGameOver(false);
       setWinLine([]);
@@ -34,13 +35,12 @@ export default function App() {
 
     socket.on("update", (g) => setBoard(g.board));
 
-    socket.on("end", ({ winner, line, board: b }) => {
+    socket.on("end", ({ winner, line, board: b, stats: s }) => {
       setBoard(b);
       setIsGameOver(true);
-      if (winner && line) {
-        setWinLine(line);
-        launchConfetti();
-      }
+      setStats(s); 
+      if (winner && line) setWinLine(line);
+      launchConfetti();
     });
 
     return () => {
@@ -52,7 +52,6 @@ export default function App() {
     };
   }, []);
 
-  // Салют
   function launchConfetti() {
     const duration = 3 * 1000;
     const animationEnd = Date.now() + duration;
@@ -71,21 +70,24 @@ export default function App() {
     }, 250);
   }
 
-  return (
-    <div className="full-screen-container">
-      {!name ? (
-        <Login setName={setName} />
-      ) : !board ? (
-        <Lobby games={games} name={name} />
-      ) : (
-        <GameBoard
-          board={board}
-          gameId={gameId}
-          mySymbol={mySymbol}
-          isGameOver={isGameOver}
-          winLine={winLine}
-        />
-      )}
-    </div>
-  );
+ return (
+  <div className="full-screen-container">
+    {!name ? (
+      <Login setName={setName} />
+    ) : !board ? (
+      <Lobby games={games} name={name} /> 
+    ) : (
+<div className="game-area">
+  <GameBoard
+    board={board}
+    gameId={gameId}
+    mySymbol={mySymbol}
+    isGameOver={isGameOver}
+    winLine={winLine}
+  />
+  <Stats stats={stats} currentPlayer={name} />
+</div>
+    )}
+  </div>
+);
 }
